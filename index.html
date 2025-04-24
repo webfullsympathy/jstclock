@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>NICT日本標準時（JST）</title>
+  <!-- Bulma CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <style>
+    .jst-clock {
+      font-size: 2.2rem;
+      font-family: 'Roboto Mono', 'Menlo', 'Consolas', monospace;
+      letter-spacing: 0.05em;
+    }
+    .clock-label {
+      font-size: 1.1rem;
+      color: #3273dc;
+    }
+    .footer-note {
+      font-size: 0.85rem;
+      color: #7a7a7a;
+      text-align: center;
+      margin-top: 0.1rem;
+    }
+  </style>
+</head>
+<body>
+  <section class="section">
+    <div class="container has-text-centered">
+      <h1 class="title">NICT日本標準時（JST）</h1>
+      <div class="box">
+        <div class="clock-label">日本標準時（ミリ秒単位）</div>
+        <div id="jst" class="jst-clock has-text-weight-bold">--:--:--.---</div>
+        <p class="is-size-7 has-text-grey mt-3">※この時刻はNICT公式APIから取得しています（3分ごとに更新）。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer note -->
+  <div class="footer-note">Created by ChatGPT</div>
+
+  <script>
+    let offset = 0;
+
+    async function fetchNICT() {
+      try {
+        const res = await fetch('https://3fe5a5f690efc790d4764f1c528a4ebb89fa4168.nict.go.jp/cgi-bin/json');
+        const data = await res.json();
+        const serverTime = data.st * 1000;
+        const clientTime = Date.now();
+        offset = serverTime - clientTime;
+      } catch (e) {
+        document.getElementById('jst').textContent = '取得失敗';
+      }
+    }
+
+    function pad(num, len = 2) {
+      return num.toString().padStart(len, '0');
+    }
+
+    function showClock() {
+      const nowUTC = new Date(Date.now() + offset);
+      const jst = new Date(nowUTC.getTime() + 9 * 60 * 60 * 1000);
+
+      const y = jst.getUTCFullYear();
+      const m = pad(jst.getUTCMonth() + 1);
+      const d = pad(jst.getUTCDate());
+      const h = pad(jst.getUTCHours());
+      const min = pad(jst.getUTCMinutes());
+      const s = pad(jst.getUTCSeconds());
+      const ms = pad(jst.getUTCMilliseconds(), 3);
+
+      document.getElementById('jst').textContent = `${y}/${m}/${d} ${h}:${min}:${s}.${ms}`;
+    }
+
+    fetchNICT();
+    setInterval(fetchNICT, 180000); // 3分ごとに更新
+    setInterval(showClock, 10); // 表示は10msごとに更新
+  </script>
+</body>
+</html>
