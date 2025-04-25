@@ -21,6 +21,12 @@
       text-align: center;
       margin-top: 0.1rem;
     }
+    .discord-hint {
+      margin-top: 1rem;
+      font-size: 1rem;
+      color: #23d160;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -34,6 +40,10 @@
           ※この時刻はNICT公式APIから取得しています（15分ごとに更新）。<br>
           ※通信遅延を考慮して補正しています。
         </p>
+
+        <div id="discord-hint" class="discord-hint">
+          この時刻にDiscordで「<strong>あけおめ</strong>」を送信すれば優勝！
+        </div>
       </div>
     </div>
   </section>
@@ -45,10 +55,10 @@
 
     async function fetchNICT() {
       try {
-        const start = Date.now(); // fetch開始
+        const start = Date.now();
         const res = await fetch('https://3fe5a5f690efc790d4764f1c528a4ebb89fa4168.nict.go.jp/cgi-bin/json');
-        const end = Date.now(); // fetch終了
-        const delay = (end - start) / 2; // 平均遅延（往復時間の半分）
+        const end = Date.now();
+        const delay = (end - start) / 2;
 
         const data = await res.json();
         const serverTime = data.st * 1000;
@@ -75,12 +85,13 @@
       const s = pad(jst.getUTCSeconds());
       const ms = pad(jst.getUTCMilliseconds(), 3);
 
-      document.getElementById('jst').textContent = `${y}/${m}/${d} ${h}:${min}:${s}.${ms}`;
+      const formatted = `${y}/${m}/${d} ${h}:${min}:${s}.${ms}`;
+      document.getElementById('jst').textContent = formatted;
     }
 
     fetchNICT();
-    setInterval(fetchNICT, 15 * 60 * 1000); // 15分ごとに更新
-    setInterval(showClock, 10); // 10msごとに表示更新
+    setInterval(fetchNICT, 15 * 60 * 1000);
+    setInterval(showClock, 10);
   </script>
 </body>
 </html>
