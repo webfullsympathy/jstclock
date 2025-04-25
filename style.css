@@ -1,0 +1,17 @@
+.jst-clock {
+    font-size: 2.2rem;
+    font-family: 'Roboto Mono', 'Menlo', 'Consolas', monospace;
+    letter-spacing: 0.05em;
+}
+
+.clock-label {
+    font-size: 1.1rem;
+    color: #3273dc;
+}
+
+.footer-note {
+    font-size: 0.85rem;
+    color: #7a7a7a;
+    text-align: center;
+    margin-top: 0.1rem;
+}

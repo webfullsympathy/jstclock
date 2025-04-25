@@ -30,12 +30,14 @@
       <div class="box">
         <div class="clock-label">日本標準時（ミリ秒単位）</div>
         <div id="jst" class="jst-clock has-text-weight-bold">--:--:--.---</div>
-        <p class="is-size-7 has-text-grey mt-3">※この時刻はNICT公式APIから取得しています（3分ごとに更新）。</p>
+        <p class="is-size-7 has-text-grey mt-3">
+          ※この時刻はNICT公式APIから取得しています（15分ごとに更新）。<br>
+          ※通信遅延を考慮して補正しています。
+        </p>
       </div>
     </div>
   </section>
 
-  <!-- Footer note -->
   <div class="footer-note">Created by ChatGPT</div>
 
   <script>
@@ -43,11 +45,15 @@
 
     async function fetchNICT() {
       try {
+        const start = Date.now(); // fetch開始
         const res = await fetch('https://3fe5a5f690efc790d4764f1c528a4ebb89fa4168.nict.go.jp/cgi-bin/json');
+        const end = Date.now(); // fetch終了
+        const delay = (end - start) / 2; // 平均遅延（往復時間の半分）
+
         const data = await res.json();
         const serverTime = data.st * 1000;
         const clientTime = Date.now();
-        offset = serverTime - clientTime;
+        offset = (serverTime - clientTime) - delay;
       } catch (e) {
         document.getElementById('jst').textContent = '取得失敗';
       }
@@ -73,8 +79,8 @@
     }
 
     fetchNICT();
-    setInterval(fetchNICT, 180000); // 3分ごとに更新
-    setInterval(showClock, 10); // 表示は10msごとに更新
+    setInterval(fetchNICT, 15 * 60 * 1000); // 15分ごとに更新
+    setInterval(showClock, 10); // 10msごとに表示更新
   </script>
 </body>
 </html>
