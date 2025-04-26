@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>NICT日本標準時（JST）</title>
-  <!-- Bulma CDN -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
   <style>
     .jst-clock {
@@ -21,29 +20,87 @@
       text-align: center;
       margin-top: 0.1rem;
     }
-    .discord-hint {
+    .akeome-container {
       margin-top: 1rem;
-      font-size: 1rem;
-      color: #23d160;
-      font-weight: bold;
+      display: none;
+    }
+    .akeome-buttons {
+      margin-top: 0.5rem;
+    }
+    .fixed-top-right {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      display: flex;
+      align-items: center;
+    }
+
+    /* iPhone風スイッチ */
+    .switch-ios {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 28px;
+    }
+    .switch-ios input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider-ios {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    .slider-ios::before {
+      position: absolute;
+      content: "";
+      height: 22px;
+      width: 22px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider-ios {
+      background-color: #48c774;
+    }
+    input:checked + .slider-ios::before {
+      transform: translateX(22px);
     }
   </style>
 </head>
 <body>
+  <!-- トグルスイッチ -->
+  <div class="fixed-top-right">
+    <label class="switch-ios">
+      <input type="checkbox" id="akeome-toggle">
+      <span class="slider-ios"></span>
+    </label>
+    <span style="margin-left: 0.5rem; font-size: 0.9rem;">あけおめ機能</span>
+  </div>
+
   <section class="section">
     <div class="container has-text-centered">
       <h1 class="title">NICT日本標準時（JST）</h1>
       <div class="box">
         <div class="clock-label">日本標準時（ミリ秒単位）</div>
         <div id="jst" class="jst-clock has-text-weight-bold">--:--:--.---</div>
-        <p class="is-size-7 has-text-grey mt-3">
-          ※この時刻はNICT公式APIから取得しています（15分ごとに更新）。<br>
-          ※通信遅延を考慮して補正しています。
-        </p>
+        <p class="is-size-7 has-text-grey mt-3">※この時刻はNICT公式APIから取得しています（15分ごとに更新）。</p>
 
-        <div id="discord-hint" class="discord-hint">
-          この時刻にDiscordで「<strong>あけおめ</strong>」を送信すれば優勝！
+        <!-- あけおめカウントダウン・ボタンエリア -->
+        <div id="akeome-container" class="akeome-container">
+          <p id="akeome-text" class="title is-4"></p>
+          <div class="buttons is-centered akeome-buttons">
+            <button class="button is-primary" onclick="copyAkeome()">あけおめコピペ</button>
+            <a href="https://discord.com/channels/1297608893823979660/1298110153182412892" target="_blank" class="button is-link">ウェブマニアと雑談チャンネルへ</a>
+          </div>
         </div>
+
       </div>
     </div>
   </section>
@@ -52,6 +109,13 @@
 
   <script>
     let offset = 0;
+    let akeomeEnabled = false;
+    let debugOffset = 0; // デバッグ用
+
+    const toggle = document.getElementById('akeome-toggle');
+    toggle.addEventListener('change', () => {
+      akeomeEnabled = toggle.checked;
+    });
 
     async function fetchNICT() {
       try {
@@ -61,9 +125,9 @@
         const delay = (end - start) / 2;
 
         const data = await res.json();
-        const serverTime = data.st * 1000;
+        const serverTime = data.st * 1000 + delay;
         const clientTime = Date.now();
-        offset = (serverTime - clientTime) - delay;
+        offset = serverTime - clientTime;
       } catch (e) {
         document.getElementById('jst').textContent = '取得失敗';
       }
@@ -73,25 +137,64 @@
       return num.toString().padStart(len, '0');
     }
 
-    function showClock() {
-      const nowUTC = new Date(Date.now() + offset);
-      const jst = new Date(nowUTC.getTime() + 9 * 60 * 60 * 1000);
-
-      const y = jst.getUTCFullYear();
-      const m = pad(jst.getUTCMonth() + 1);
-      const d = pad(jst.getUTCDate());
-      const h = pad(jst.getUTCHours());
-      const min = pad(jst.getUTCMinutes());
-      const s = pad(jst.getUTCSeconds());
-      const ms = pad(jst.getUTCMilliseconds(), 3);
-
-      const formatted = `${y}/${m}/${d} ${h}:${min}:${s}.${ms}`;
-      document.getElementById('jst').textContent = formatted;
+    function getNow() {
+      return new Date(Date.now() + offset + debugOffset);
     }
 
+    function showClock() {
+      const now = getNow();
+      const y = now.getFullYear();
+      const m = pad(now.getMonth() + 1);
+      const d = pad(now.getDate());
+      const h = pad(now.getHours());
+      const min = pad(now.getMinutes());
+      const s = pad(now.getSeconds());
+      const ms = pad(now.getMilliseconds(), 3);
+
+      document.getElementById('jst').textContent = `${y}/${m}/${d} ${h}:${min}:${s}.${ms}`;
+      updateAkeome(now);
+    }
+
+    function updateAkeome(now) {
+      const container = document.getElementById('akeome-container');
+      const text = document.getElementById('akeome-text');
+
+      if (!akeomeEnabled) {
+        container.style.display = 'none';
+        return;
+      }
+
+      const h = now.getHours();
+      const m = now.getMinutes();
+      const s = now.getSeconds();
+
+      if (h === 23 && m === 58) {
+        container.style.display = 'block';
+        text.textContent = 'あけおめスタンバイ中...';
+      } else if (h === 23 && m === 59 && s < 50) {
+        container.style.display = 'block';
+        text.textContent = 'まもなくカウントダウン！';
+      } else if (h === 23 && m === 59 && s >= 50) {
+        container.style.display = 'block';
+        text.textContent = `あけおめまであと ${60 - s} 秒！`;
+      } else if (h === 0 && m === 0 && s === 0) {
+        container.style.display = 'block';
+        text.textContent = 'あけおめ';
+      } else {
+        container.style.display = 'none';
+      }
+    }
+
+    function copyAkeome() {
+      navigator.clipboard.writeText('あけおめ');
+      alert('あけおめ！がコピーされました！');
+    }
+
+    // デバッグ用: コンソールから debugOffset = 1000 * 秒数 で現在時刻をずらせる
+
     fetchNICT();
-    setInterval(fetchNICT, 15 * 60 * 1000);
-    setInterval(showClock, 10);
+    setInterval(fetchNICT, 900000); // 15分ごと
+    setInterval(showClock, 10); // 10msごとに表示更新
   </script>
 </body>
 </html>
