@@ -10,24 +10,30 @@
       font-family: 'Roboto Mono', 'Menlo', 'Consolas', monospace;
       letter-spacing: 0.05em;
     }
+
     .clock-label {
       font-size: 1.1rem;
       color: #3273dc;
     }
+
     .footer-note {
       font-size: 0.85rem;
       color: #7a7a7a;
       text-align: center;
       margin-top: 0.1rem;
     }
-    /* iPhone風スイッチ */
+
+    /* トグルスイッチ */
     .switch {
       position: relative;
       display: inline-block;
       width: 50px;
       height: 24px;
     }
-    .switch input { display: none; }
+
+    .switch input {
+      display: none;
+    }
     .slider {
       position: absolute;
       cursor: pointer;
@@ -37,6 +43,7 @@
       transition: .4s;
       border-radius: 24px;
     }
+
     .slider:before {
       position: absolute;
       content: "";
@@ -48,15 +55,32 @@
       transition: .4s;
       border-radius: 50%;
     }
+
     input:checked + .slider {
       background-color: #4CAF50;
     }
+
     input:checked + .slider:before {
       transform: translateX(26px);
     }
-    /* あけおめ用 */
+
+
     .akemodesu {
       margin-top: 1rem;
+    }
+
+    #notification {
+      position: fixed;
+      right: -350px; /* 初期は画面外（右） */
+      bottom: 1rem;
+      opacity: 0;
+      transition: right 0.5s ease, opacity 0.5s ease;
+      z-index: 9999;
+    }
+
+    #notification.active {
+      right: 1rem;   /* 画面内にスライドイン */
+      opacity: 1;
     }
   </style>
 </head>
@@ -92,6 +116,11 @@
   </section>
 
   <div class="footer-note">Created by ChatGPT</div>
+
+  <div id="notification" class="notification is-success">
+    コピーしました！
+  </div>
+
 
   <script>
     let offset = 0;
@@ -156,9 +185,15 @@
       }
     }
 
+    const notification = document.getElementById('notification');
+
     document.getElementById('copy-button').addEventListener('click', () => {
       navigator.clipboard.writeText('あけおめ').then(() => {
-        alert('コピーしました！');
+        notification.classList.add('active');
+        
+        setTimeout(() => {
+          notification.classList.remove('active');
+        }, 2000);
       });
     });
 
